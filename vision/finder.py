@@ -1,0 +1,69 @@
+import cv2
+import numpy as np
+
+sens = 30
+boundaries = ([0, 0, 255-sens], [255, sens, 255])
+
+def convertImg(image):
+	lower = np.array(boundaries[0], dtype = "uint8" )
+	upper = np.array(boundaries[1], dtype = "uint8" )
+	#image = cv2.medianBlur(image, 3)
+	#gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+	#thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 0)
+	hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+	mask = cv2.inRange(hsv, lower, upper)
+	#mask = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+	hsv = cv2.bitwise_and(image, image, mask = mask)
+	
+	# TOOO DDDOOOOO BETTER CONVERSION
+	
+	bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+	gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+	#can = cv2.Canny(mimg, 100, 200)
+	return gray
+
+def getContours(image):
+	cimg = convertImg(image)
+	(_,contours,_) = cv2.findContours(cimg.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+	#cv2.drawContours(cimg, contours, -1, (255,0,0), 2)
+	return contours
+
+def getCentroid(contour):
+	M = cv2.moments(contour)
+	x = 0
+	y = 0
+	if M['m00'] != 0.0:
+		x = int(M['m10']/M['m00'])
+		y = int(M['m01']/M['m00'])
+	return x,y
+
+#def getDistanceFromArea(a):
+#	return 454.308943089 * ((0.031 / np.sqrt(a)) + 0.002038)
+
+def findPoints(image):
+	contours = getContours(image)
+
+	#areas = []
+
+	for contour in contours:
+		a = cv2.contourArea(contour)
+		if a > 250.0:
+			cx,cy = getCentroid(contour)
+			cv2.circle(image, (cx,cy), 5, (255, 0, 0), 1)
+			cv2.putText(image, str(a), (cx,cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255))
+			#areas.append(a)
+
+#	if len(areas) > 1 :
+#		a = (areas[0] + areas[1]) / 2.0
+#		d = getDistanceFromArea(a)
+
+#		cv2.putText(image, str(d), (50,50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0))
+
+	return image
+
+def get_thresh(in_img):
+	img = cv2.cvtColor(in_img, cv2.COLOR_BGR2GRAY);
+
+	ret, img = cv2.threshold(img, 220, 255, cv2.THRESH_BINARY)
+
+	return img
