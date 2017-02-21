@@ -1,11 +1,11 @@
-import cv2
+kimport cv2
 import time
 from vision.camera import Camera
 import vision.finder as finder
 
 camera = Camera(0, 100)
 
-#cv2.imshow("video", camera.get_image());
+cv2.imshow("video", camera.get_image());
 
 while 1:
 	start_time = time.time()
@@ -14,13 +14,11 @@ while 1:
 
 #	edg = cv2.Canny(im, 50, 250)
 
-	p,a = finder.findPoints(im)
+	p = finder.findPoints(im)
 
-	#print(a)
-
-	#cv2.imshow("video", p)
+	cv2.imshow("video", p)
 
 	if cv2.waitKey(1) > 0:
 		break
 
-	#print("frame time: %.3f" % (time.time() - start_time))
+	print("frame time: %.3f" % (time.time() - start_time))
