@@ -13,8 +13,8 @@ import vision.finder as finder
 
 SHOW_IMAGE = True
 USE_VISION = True
-CAMERA_WIDTH = 480.0
-CAMERA_HEIGHT = 270.0
+CAMERA_WIDTH = 480
+CAMERA_HEIGHT = 270
 HEIGHT_DIFF = (21.75 - 13.25) * 0.0254  # meters
 
 # functions
@@ -53,22 +53,23 @@ while True:
 		img,a1,a2,c1,c2,ct = finder.findPoints(img, SHOW_IMAGE)
 
 		fovh = 30.686  # degrees
-		x = 8.0 * 0.0254  # distance between tapes (meters)
+		x = 8.0 * 0.0254  # meters
 		w = 1.0  # meters
-		h = w * CAMERA_HEIGHT / CAMERA_WIDTH  # meters
-		dc = 0.5 * w / math.tan(math.radians(fovh))  # meters
-#		xp = w * abs((c1[0] - CAMERA_WIDTH/2.0) - (c2[0] - CAMERA_WIDTH/2.0)) / CAMERA_WIDTH  # meters
-		cx = w * (ct[0] - CAMERA_WIDTH/2.0) / CAMERA_WIDTH  # meters
+		h = w * CAMERA_HEIGHT / CAMERA_WIDTH
+		xp = w * abs((c1[0] - CAMERA_WIDTH/2.0) - (c2[0] - CAMERA_WIDTH/2.0)) / CAMERA_WIDTH  # meters
+		ep = w * (ct[0] - CAMERA_WIDTH/2.0) / CAMERA_WIDTH  # meters
+
 		cy = h * (ct[1] - CAMERA_HEIGHT/2.0) / CAMERA_HEIGHT  # meters
 
-		#d = (dc * HEIGHT_DIFF / cx) * math.sqrt((dc*dc + cy*cy + cx*cx) / (dc*dc + 2.0*cy*cy))
-		d = dc * HEIGHT_DIFF / cy
-
-		#e = cx * math.sqrt((d*d + HEIGHT_DIFF*HEIGHT_DIFF) / (dc*dc + cy*cy))
-		e = cx * HEIGHT_DIFF / cy
+		d = HEIGHT_DIFF
+		if xp > 0.00001 :
+			d = (x / xp) * math.sqrt(math.pow(w / (math.tan(math.radians(fovh)) * 2.0), 2.0) + cy*cy)  # meters
+		d = math.sqrt(d * d - HEIGHT_DIFF * HEIGHT_DIFF)
+		
+		e = x * ep / xp
 
 		print("d: %f, e: %f" % (d, e))
-#		print("c: %f, %f" % (cx, cy))	
+#		print("ct: %f" % c1[0])	
 #		print("a1: %f, a2: %f, cx: %f, cy: %f" % (a1, a2, ct[0], ct[1]))
 
 		vtable.putNumber("centerX", ct[0])

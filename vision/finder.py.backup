@@ -18,9 +18,9 @@ def convertImg(image):
 	# TOOO DDDOOOOO BETTER CONVERSION
 	
 	bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-	gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+	#gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
 	#can = cv2.Canny(mimg, 100, 200)
-	return gray
+	return bgr
 
 def getContours(image):
 	cimg = convertImg(image)
@@ -40,38 +40,44 @@ def getCentroid(contour):
 #def getDistanceFromArea(a):
 #	return 454.308943089 * ((0.031 / np.sqrt(a)) + 0.002038)
 
-def findPoints(image, show_image):
+def findPoints(image):
 	contours = getContours(image)
 	max1 = 0
 	max2 = 0
-	maxcontour1 = None
-	maxcontour2 = None
-
+	c1 = (0,0)
+	c2 = (0,0)
+	#areas = []
 	for contour in contours:
 		a = cv2.contourArea(contour)
 		if a > max1 :
-			max2 = max1
+			c1 = getCentroid(contour)
 			max1 = a
-			maxcontour2 = maxcontour1
-			maxcontour1 = contour
-		elif a > max2 :
+
+	for contour in contours:
+		a = cv2.contourArea(contour)
+		if a > max2 and a != max1 :
+			c2 = getCentroid(contour)
 			max2 = a
-			maxcontour2 = contour
+	
+	for contour in contours:
+		a = cv2.contourArea(contour)
+		if a > 300 and (a == max1 or a==max2):
+			cx,cy = getCentroid(contour)
+			cv2.circle(image, (cx,cy), 5, (255, 0, 0), 1)
+			cv2.putText(image, str(a), (cx,cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255))
+			#areas.append(a)
 
-	c1 = getCentroid(maxcontour1)
-	c2 = getCentroid(maxcontour2)
-
-	if show_image :
-		cv2.circle(image, c1, 5, (255, 0, 0), 1)
-		cv2.putText(image, str(max1), c1, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255))
-
-		cv2.circle(image, c2, 5, (255, 0, 0), 1)
-		cv2.putText(image, str(max2), c2, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255))
-
+	#print("a1: %f, a2: %f" % (max1,max2))
 
 	ct = ((c1[0] + c2[0])/2.0, (c1[1] + c2[1])/2.0)
 
-	return image,max1,max2,c1,c2,ct
+#	if len(areas) > 1 :
+#		a = (areas[0] + areas[1]) / 2.0
+#		d = getDistanceFromArea(a)
+
+#		cv2.putText(image, str(d), (50,50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0))
+
+	return image,max1,max2,ct
 
 def get_thresh(in_img):
 	img = cv2.cvtColor(in_img, cv2.COLOR_BGR2GRAY);

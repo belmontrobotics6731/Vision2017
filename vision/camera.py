@@ -6,11 +6,12 @@ class Camera(object):
 		self.camera_port = camera_port
 		self.discard_frames = discard_frames
 		self.camera = cv2.VideoCapture(self.camera_port)
-		#cap = cv2.VideoCapture(0)
-		#cap.set(3,640)
-		#cap.set(4,480)
+
 	def __def__(self):
 		del(self.camera)
+
+	def set(self, p, v):
+		self.camera.set(p, v)
 
 	def capture(self):
 		retval, im = self.camera.read()
