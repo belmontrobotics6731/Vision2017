@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 class Camera(object):
 
@@ -16,7 +17,11 @@ class Camera(object):
 	def capture(self):
 		retval, im = self.camera.read()
 		#im = cv2.resize(im, (640,480))
-		return im
+		if retval:
+			return im
+		else:
+			print("fail")
+			return np.zeros((0,0,3), np.uint8)
 
 	def get_image(self):
 		for i in range(self.discard_frames):

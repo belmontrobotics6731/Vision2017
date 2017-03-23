@@ -1,9 +1,13 @@
 # includes
 import cv2
+import numpy as np
 from networktables import NetworkTable
 
 import time
 import math
+import sys
+import threading
+import usb.core
 
 from vision.camera import Camera
 import vision.finder as finder
@@ -16,6 +20,8 @@ USE_VISION = True
 CAMERA_WIDTH = 480
 CAMERA_HEIGHT = 270
 HEIGHT_DIFF = (21.75 - 13.25) * 0.0254  # meters
+CAMERA_START_INDEX = 0
+CAMERA_MAX_INDEX = 2
 
 # functions
 
@@ -24,10 +30,63 @@ def connectionListener(conn, inf):
 
 
 # init
-camera = Camera(0, 10)
-camera.set(3, CAMERA_WIDTH)
-camera.set(4, CAMERA_HEIGHT)
-camera.set(5, 20)
+
+if SHOW_IMAGE :
+        cv2.startWindowThread()
+        cv2.namedWindow("image")
+
+camera = None
+
+def find_camera():
+	global camera
+	
+	cidx = CAMERA_START_INDEX
+
+	while True :
+		try:
+			if camera:
+				del(camera)
+
+			print(cidx)
+
+			camera = Camera(cidx, 10)
+			camera.set(3, CAMERA_WIDTH)
+			camera.set(4, CAMERA_HEIGHT)
+			camera.set(5, 20)
+
+			cidx = cidx + 1
+			if cidx > CAMERA_MAX_INDEX:
+				cidx = CAMERA_START_INDEX
+
+			if camera == None:
+				print("none")
+
+			im = camera.get_image()
+
+			if im == None:
+				continue
+
+			h,w,_ = im.shape
+
+			print("%d, %d" % (h, w))
+
+			if w < 1 or h < 1:
+				continue
+		
+			if SHOW_IMAGE :
+				cv2.imshow("image", im)
+
+			break
+
+		except (KeyboardInterrupt, SystemExit):
+			sys.exit()
+		except:
+			time.sleep(0.01)
+			pass
+
+find_camera()
+
+print("done")
 
 NetworkTable.setIPAddress("roboRIO-6731-FRC.local")
 NetworkTable.setClientMode()
@@ -36,11 +95,6 @@ NetworkTable.initialize()
 vtable = NetworkTable.getTable("vision")
 
 NetworkTable.addConnectionListener(connectionListener, immediateNotify=True)
-
-if SHOW_IMAGE :
-        cv2.startWindowThread()
-        cv2.namedWindow("image")
-        cv2.imshow("image", camera.get_image())
 
 # main
 
@@ -52,12 +106,50 @@ vtable.putNumber("offset", 0.0)
 vtable.putNumber("distance", 0.0)
 
 
+dev_count = -1
+
+def count_devices():
+	global dev_count
+	count = 0
+
+	dev = usb.core.find()
+#	count = len(dev)
+
+	for d in dev:
+		count = count + 1
+
+	print("count: %d" % count)
+
+	if count != dev_count and dev_count != -1:
+		find_camera()
+
+	dev_count = count
+
+#threading.Timer(2.0, count_devices).start()
+
 while True:
 
 	try:
 		st = time.time()
 
+#		print("here")
+
+#		count_devices()
+
 		img = camera.capture()
+
+	#	if img == None:
+	#		find_camera()
+	#		break
+	#	else:
+	#		h,w,_ = img.shape
+
+	#		if h < 1 or w < 1:
+	#			print("x")
+	#			find_camera()
+	#			break
+
+#		print("there")
 
 		if USE_VISION:
 			img,a1,a2,c1,c2,ct = finder.findPoints(img, SHOW_IMAGE)
